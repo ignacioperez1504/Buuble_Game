@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Mind</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #111;
+            color: white;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .card {
+            font-size: 30px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>The Mind</h1>
+
+<!-- SELECCIÓN DE JUGADORES -->
+<div id="menu">
+    <h2>Selecciona número de jugadores</h2>
+    <button onclick="initGame(2)">2 Jugadores</button>
+    <button onclick="initGame(3)">3 Jugadores</button>
+    <button onclick="initGame(4)">4 Jugadores</button>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+    <h2 id="playerTitle"></h2>
+    <div id="cards"></div>
+    <button onclick="nextStep()">Continuar</button>
+</div>
+
+<!-- JUEGO -->
+<div id="game" style="display:none;">
+    <h2>Juego en curso</h2>
+    <p id="lives"></p>
+
+    <input id="moveInput" placeholder="Ej: 0 23">
+    <button onclick="playMove()">Jugar</button>
+
+    <br>
+    <button onclick="showPlayerCardsPrompt()">👁 Ver mis cartas</button>
+
+    <div id="log"></div>
+</div>
+
+<script>
+let game = {
+    level: 1,
+    lives: 3,
+    players: [],
+    deck: []
+};
+
+let currentPlayer = 0;
+let numPlayers = 2;
+
+/* ---------- INIT ---------- */
+
+function initGame(n) {
+    numPlayers = n;
+    game.players = [];
+
+    for (let i = 0; i < numPlayers; i++) {
+        game.players.push({ hand: [] });
+    }
+
+    document.getElementById("menu").style.display = "none";
+
+    startGame();
+    startPlayerView();
+}
+
+function createDeck() {
+    game.deck = Array.from({length:100}, (_,i)=>i+1);
+    game.deck.sort(()=>Math.random()-0.5);
+}
+
+function dealCards() {
+    game.players.forEach(p => p.hand = []);
+    for (let i=0; i<game.level; i++) {
+        game.players.forEach(p => p.hand.push(game.deck.pop()));
+    }
+    game.players.forEach(p => p.hand.sort((a,b)=>a-b));
+}
+
+function startGame() {
+    createDeck();
+    dealCards();
+    updateLives();
+}
+
+/* ---------- FLUJO ---------- */
+
+function startPlayerView() {
+    currentPlayer = 0;
+    showCards();
+}
+
+function showCards() {
+    let overlay = document.getElementById("overlay");
+    overlay.style.display = "flex";
+
+    document.getElementById("playerTitle").innerText =
+        "Jugador " + currentPlayer + " mira tus cartas";
+
+    let cardsDiv = document.getElementById("cards");
+    cardsDiv.innerHTML = "";
+
+    game.players[currentPlayer].hand.forEach(c => {
+        let el = document.createElement("div");
+        el.className = "card";
+        el.innerText = c;
+        cardsDiv.appendChild(el);
+    });
+}
+
+function nextStep() {
+    currentPlayer++;
+
+    if (currentPlayer < numPlayers) {
+        showCards();
+    } else {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("game").style.display = "block";
+    }
+}
+
+/* ---------- VER CARTAS EN JUEGO ---------- */
+
+function showPlayerCardsPrompt() {
+    let player = prompt("¿Qué jugador quiere ver sus cartas?");
+    player = Number(player);
+
+    if (isNaN(player) || player < 0 || player >= numPlayers) {
+        alert("Jugador inválido");
+        return;
+    }
+
+    currentPlayer = player;
+    showCards();
+}
+
+/* ---------- JUEGO ---------- */
+
+function getMinCard() {
+    let all = [];
+    game.players.forEach(p => all.push(...p.hand));
+    return Math.min(...all);
+}
+
+function playMove() {
+    let input = document.getElementById("moveInput").value;
+    let parts = input.split(" ");
+
+    if (parts.length < 2) {
+        log("⚠️ Formato incorrecto (ej: 0 23)");
+        return;
+    }
+
+    let player = Number(parts[0]);
+    let card = Number(parts[1]);
+
+    let hand = game.players[player].hand;
+
+    if (!hand || hand.length === 0) {
+        log("⚠️ Ese jugador no tiene cartas");
+        return;
+    }
+
+    if (card !== hand[0]) {
+        log("⚠️ Debes jugar la menor carta");
+        return;
+    }
+
+    hand.shift();
+
+    let min = getMinCard();
+
+    if (min !== undefined && card > min) {
+        game.lives--;
+        log("❌ Error! Pierden vida");
+
+        game.players.forEach(p => {
+            p.hand = p.hand.filter(c => c > card);
+        });
+    } else {
+        log("✅ Carta correcta: " + card);
+    }
+
+    updateLives();
+}
+
+function log(msg) {
+    let div = document.getElementById("log");
+    div.innerHTML += "<p>" + msg + "</p>";
+}
+
+function updateLives() {
+    document.getElementById("lives").innerText =
+        "❤️ Vidas: " + game.lives;
+}
+</script>
+
+</body>
+</html>
