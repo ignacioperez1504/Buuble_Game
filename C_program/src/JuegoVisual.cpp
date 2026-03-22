@@ -94,7 +94,7 @@ void JuegoVisual::verificarFinNivel() {
     if (nivelTerminado) {
         nivel++;
 
-        // 🎁 recompensa aleatoria
+        //recompensa aleatoria
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dist(0, 1);
@@ -114,7 +114,7 @@ void JuegoVisual::verificarFinNivel() {
         mostrarMensaje = true;
         relojMensaje.restart();
 
-        std::cout << "🎉 Nivel " << nivel << "\n";
+        std::cout << "Nivel " << nivel << "\n";
 
         iniciarNivel();
     }
@@ -144,14 +144,14 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     int minGlobal = getMinGlobal();
 
-    // ❌ Carta incorrecta
+    //Carta incorrecta
     if (carta != minGlobal) {
         vidas--;
 	mensajeEstado = "Carta incorrecta";
         colorMensaje = sf::Color::Red;
         mostrarMensaje = true;
         relojMensaje.restart();
-        std::cout << "❌ Carta incorrecta. Vidas restantes: "
+        std::cout << "Carta incorrecta. Vidas restantes: "
                   << vidas << "\n";
 
         // eliminar cartas menores
@@ -163,14 +163,14 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         }
 
         if (vidas <= 0) {
-            std::cout << "💀 GAME OVER\n";
+            std::cout << "GAME OVER\n";
             window.close();
         }
 
         return;
     }
 
-    // ✅ Carta correcta
+    //Carta correcta
     jugadores[jugador].jugarCarta();
 
     cartasJugadas.push_back(carta);
@@ -179,7 +179,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     colorMensaje = sf::Color::Green;
     mostrarMensaje = true;
     relojMensaje.restart();
-    std::cout << "✅ Carta correcta: " << carta << "\n";
+    std::cout << "Carta correcta: " << carta << "\n";
 
     ultimaCarta = carta;
 
@@ -303,7 +303,7 @@ void JuegoVisual::dibujarJuego() {
             sf::Text texto(font, mensajeEstado, 28);
             texto.setStyle(sf::Text::Bold);
             texto.setFillColor(colorMensaje);
-            texto.setPosition(sf::Vector2f(350.f, 20.f));
+            texto.setPosition(sf::Vector2f(350.f, 80.f));
             window.draw(texto);
         } else {
             mostrarMensaje = false;
@@ -479,10 +479,22 @@ void JuegoVisual::usarComodin() {
             j.eliminarCartaMasBaja();
         }
     }
-
+    
     comodines--;
 
-    mensajeEstado = "Comodin usado";
+    std::string mensaje = "Comodin usado. Se eliminaron: ";
+
+    for (auto& j : jugadores) {
+        if (j.tieneCartas()) {
+            int val = j.eliminarCartaMasBaja();
+            if (val != -1) {
+                mensaje += std::to_string(val) + " ";
+            }
+        }
+    }
+
+    mensajeEstado = mensaje;
+
     colorMensaje = sf::Color::Yellow;
     mostrarMensaje = true;
     relojMensaje.restart();

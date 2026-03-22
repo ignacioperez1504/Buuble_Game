@@ -33,9 +33,11 @@ bool Jugador::tieneCartas() {
     return !mano.empty();
 }
 
-void Jugador::eliminarCartaMasBaja() {
+int Jugador::eliminarCartaMasBaja() {
     if (!mano.empty()) {
-        std::cout << "(Se elimina " << mano.front().getValor() << ") ";
+        int valor = mano.front().getValor();
         mano.erase(mano.begin());
+        return valor;
     }
+    return -1; // o algún valor inválido
 }

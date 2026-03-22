@@ -17,7 +17,7 @@ public:
     Carta verCarta();
     bool tieneCartas();
 
-    void eliminarCartaMasBaja();
+    int eliminarCartaMasBaja();
 };
 
 #endif
