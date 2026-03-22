@@ -147,7 +147,7 @@ void JuegoVisual::dibujarOverlay() {
 
     Jugador copia = jugadores[jugadorActual];
     
-    // Inicializar cartas visibles si es primera vez
+    // Inicializar cartas ocultas si es primera vez
     if (cartasVisibles.empty()) {
         while (copia.tieneCartas()) {
             cartasVisibles.push_back(false);  // por defecto mostrar
