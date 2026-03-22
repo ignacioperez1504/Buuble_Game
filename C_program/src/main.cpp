@@ -1,4 +1,4 @@
-#include "JuegoVisual.cpp"
+#include "JuegoVisual.h"
 
 int main() {
     JuegoVisual juego;
