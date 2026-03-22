@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-// Constructor
 JuegoVisual::JuegoVisual() :
     window(sf::VideoMode(sf::Vector2u(900, 600)), "The Mind"),
     font(),
@@ -20,7 +19,9 @@ JuegoVisual::JuegoVisual() :
     ultimaCarta(0),
     inputTexto(""),
     cartasVisibles(),
-    rectangulosCartas()
+    rectangulosCartas(),
+    mostrarMensaje(false),
+    mensajeEstado("")
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
@@ -57,6 +58,8 @@ void JuegoVisual::iniciarNivel() {
     ultimaCarta = 0;
     jugadorActual = 0;
     enOverlay = true;
+ 
+    cartasJugadas.clear();
 }
 
 // Min global
@@ -73,24 +76,41 @@ int JuegoVisual::getMinGlobal() {
     return (min == 101) ? -1 : min;
 }
 
-// Jugar desde input tipo "0 23"
+// Jugar desde input tipo "23"
 void JuegoVisual::jugarDesdeInput(std::string input) {
     std::stringstream ss(input);
-    int jugador, carta;
+    int carta;
 
-    ss >> jugador >> carta;
+    ss >> carta;
     if (ss.fail()) return;
 
-    if (jugador < 0 || jugador >= numJugadores) return;
-    if (!jugadores[jugador].tieneCartas()) return;
+    // Buscar jugador que tiene esa carta arriba
+    int jugador = -1;
 
-    int cartaReal = jugadores[jugador].verCarta().getValor();
+    for (int i = 0; i < numJugadores; i++) {
+        if (jugadores[i].tieneCartas() &&
+            jugadores[i].verCarta().getValor() == carta) {
+            jugador = i;
+            break;
+        }
+    }
 
-    if (carta != cartaReal) {
+    // Nadie tiene esa carta
+    if (jugador == -1) return;
+
+    int minGlobal = getMinGlobal();
+
+    // ❌ Carta incorrecta
+    if (carta != minGlobal) {
         vidas--;
-        std::cout << "❌ Debes jugar la menor carta. Vidas restantes: " << vidas << "\n";
+	mensajeEstado = "Carta incorrecta";
+        colorMensaje = sf::Color::Red;
+        mostrarMensaje = true;
+        relojMensaje.restart();
+        std::cout << "❌ Carta incorrecta. Vidas restantes: "
+                  << vidas << "\n";
 
-        // eliminar cartas menores incorrectas
+        // eliminar cartas menores
         for (auto& j : jugadores) {
             while (j.tieneCartas() &&
                    j.verCarta().getValor() < carta) {
@@ -106,12 +126,20 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         return;
     }
 
+    // ✅ Carta correcta
     jugadores[jugador].jugarCarta();
+
+    cartasJugadas.push_back(carta);
+
+    mensajeEstado = "Carta correcta";
+    colorMensaje = sf::Color::Green;
+    mostrarMensaje = true;
+    relojMensaje.restart();
     std::cout << "✅ Carta correcta: " << carta << "\n";
 
     ultimaCarta = carta;
 
-    // Revisar si terminamos el nivel
+    // Revisar fin de nivel
     bool nivelTerminado = true;
     for (auto& j : jugadores) {
         if (j.tieneCartas()) {
@@ -123,7 +151,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     if (nivelTerminado) {
         nivel++;
         std::cout << "🎉 Nivel " << nivel << "\n";
-        iniciarNivel(); // reparte cartas +1 a cada jugador automáticamente
+        iniciarNivel();
     }
 }
 
@@ -205,11 +233,49 @@ void JuegoVisual::dibujarJuego() {
     dibujarTexto("Nivel: " + std::to_string(nivel), 50, 20);
     dibujarTexto("Vidas: " + std::to_string(vidas), 200, 20);
 
-    dibujarTexto("Escribe: jugador carta (ej: 0 23)", 50, 60);
+    dibujarTexto("Escribe una carta (ej: 23)", 50, 60);
     dibujarTexto(inputTexto, 50, 100);
 
     dibujarTexto("Ultima carta: " + std::to_string(ultimaCarta), 50, 140);
     dibujarTexto("Presiona V para ver cartas", 50, 180);
+
+    // ===== Cartas jugadas =====
+    dibujarTexto("Cartas jugadas:", 50, 240);
+
+    float x = 50.f;
+    float y = 280.f;
+
+    for (int carta : cartasJugadas) {
+        sf::RectangleShape r(sf::Vector2f(50, 70));
+        r.setFillColor(sf::Color::White);
+        r.setPosition(sf::Vector2f(x, y));
+        window.draw(r);
+
+        sf::Text t(font, std::to_string(carta), 18);
+        t.setFillColor(sf::Color::Black);
+        t.setPosition(sf::Vector2f(x + 12.f, y + 20.f));
+        window.draw(t);
+
+        x += 60.f;
+
+        // salto de línea automático
+        if (x > 800.f) {
+            x = 50.f;
+            y += 80.f;
+        }
+    }
+    // Mostrar mensaje temporal
+    if (mostrarMensaje) {
+        if (relojMensaje.getElapsedTime().asSeconds() < 2.f) {
+            sf::Text texto(font, mensajeEstado, 28);
+            texto.setStyle(sf::Text::Bold);
+            texto.setFillColor(colorMensaje);
+            texto.setPosition(sf::Vector2f(350.f, 20.f));
+            window.draw(texto);
+        } else {
+            mostrarMensaje = false;
+        }
+    }
 }
 
 // Eventos

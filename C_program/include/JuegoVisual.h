@@ -33,6 +33,13 @@ private:
     // Cartas mostradas/ocultas en overlay
     std::vector<bool> cartasVisibles;
     std::vector<sf::RectangleShape> rectangulosCartas;
+    std::string mensajeEstado;
+    sf::Color colorMensaje;
+    sf::Clock relojMensaje;
+    bool mostrarMensaje;
+    
+    // Historial de cartas jugadas
+    std::vector<int> cartasJugadas;
 
 public:
     JuegoVisual();
