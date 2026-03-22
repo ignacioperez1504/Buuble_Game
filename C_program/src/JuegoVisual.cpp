@@ -10,6 +10,7 @@ JuegoVisual::JuegoVisual() :
     menu(font),
     vidas(3),
     nivel(1),
+    comodines(0),
     numJugadores(0),
     enMenu(true),
     enOverlay(false),
@@ -76,6 +77,45 @@ int JuegoVisual::getMinGlobal() {
     return (min == 101) ? -1 : min;
 }
 
+void JuegoVisual::verificarFinNivel() {
+    bool nivelTerminado = true;
+
+    for (auto& j : jugadores) {
+        if (j.tieneCartas()) {
+            nivelTerminado = false;
+            break;
+        }
+    }
+
+    if (nivelTerminado) {
+        nivel++;
+
+        // 🎁 recompensa aleatoria
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dist(0, 1);
+
+        int recompensa = dist(gen);
+
+        if (recompensa == 0) {
+            vidas++;
+            mensajeEstado = "Ganaste una vida";
+            colorMensaje = sf::Color::Green;
+        } else {
+            comodines++;
+            mensajeEstado = "Ganaste un comodin";
+            colorMensaje = sf::Color::Yellow;
+        }
+
+        mostrarMensaje = true;
+        relojMensaje.restart();
+
+        std::cout << "🎉 Nivel " << nivel << "\n";
+
+        iniciarNivel();
+    }
+}
+
 // Jugar desde input tipo "23"
 void JuegoVisual::jugarDesdeInput(std::string input) {
     std::stringstream ss(input);
@@ -139,20 +179,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     ultimaCarta = carta;
 
-    // Revisar fin de nivel
-    bool nivelTerminado = true;
-    for (auto& j : jugadores) {
-        if (j.tieneCartas()) {
-            nivelTerminado = false;
-            break;
-        }
-    }
-
-    if (nivelTerminado) {
-        nivel++;
-        std::cout << "🎉 Nivel " << nivel << "\n";
-        iniciarNivel();
-    }
+    verificarFinNivel();
 }
 
 // Dibujar texto
@@ -241,6 +268,8 @@ void JuegoVisual::dibujarJuego() {
 
     // ===== Cartas jugadas =====
     dibujarTexto("Cartas jugadas:", 50, 240);
+
+    dibujarTexto("Comodines: " + std::to_string(comodines), 350, 20);
 
     float x = 50.f;
     float y = 280.f;
@@ -367,6 +396,10 @@ void JuegoVisual::manejarEventos() {
                     jugarDesdeInput(inputTexto);
                     inputTexto = "";
                 }
+
+                if (key->code == sf::Keyboard::Key::B) {
+                    usarComodin();
+                }
             }
         }
     }
@@ -387,4 +420,23 @@ void JuegoVisual::ejecutar() {
 
         window.display();
     }
+}
+
+void JuegoVisual::usarComodin() {
+    if (comodines <= 0) return;
+
+    for (auto& j : jugadores) {
+        if (j.tieneCartas()) {
+            j.eliminarCartaMasBaja();
+        }
+    }
+
+    comodines--;
+
+    mensajeEstado = "Comodin usado";
+    colorMensaje = sf::Color::Yellow;
+    mostrarMensaje = true;
+    relojMensaje.restart();
+
+    verificarFinNivel();
 }
