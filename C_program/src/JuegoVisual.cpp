@@ -62,6 +62,7 @@ void JuegoVisual::iniciarNivel() {
     enOverlay = true;
  
     cartasJugadas.clear();
+    inputTexto.clear();
 
     mostrandoNivel = true;
     relojNivel.restart();
@@ -125,12 +126,20 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     std::stringstream ss(input);
     int carta;
 
+    // Intentar convertir input a número
     ss >> carta;
-    if (ss.fail()) return;
+
+    // Input no numérico
+    if (ss.fail()) {
+        mensajeEstado = "Vuelve a intentar";
+        colorMensaje = sf::Color::Yellow;
+        mostrarMensaje = true;
+        relojMensaje.restart();
+        return;
+    }
 
     // Buscar jugador que tiene esa carta arriba
     int jugador = -1;
-
     for (int i = 0; i < numJugadores; i++) {
         if (jugadores[i].tieneCartas() &&
             jugadores[i].verCarta().getValor() == carta) {
@@ -139,15 +148,22 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         }
     }
 
-    // Nadie tiene esa carta
-    if (jugador == -1) return;
+    // Número no válido en la ronda
+    if (jugador == -1) {
+        mensajeEstado = "Numero Erroneo";
+        colorMensaje = sf::Color::Yellow;
+        mostrarMensaje = true;
+        relojMensaje.restart();
+        return;
+    }
 
+    // Carta mínima global
     int minGlobal = getMinGlobal();
 
     //Carta incorrecta
     if (carta != minGlobal) {
         vidas--;
-	mensajeEstado = "Carta incorrecta";
+        mensajeEstado = "Carta incorrecta";
         colorMensaje = sf::Color::Red;
         mostrarMensaje = true;
         relojMensaje.restart();
@@ -172,7 +188,6 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     //Carta correcta
     jugadores[jugador].jugarCarta();
-
     cartasJugadas.push_back(carta);
 
     mensajeEstado = "Carta correcta";
@@ -183,6 +198,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     ultimaCarta = carta;
 
+    // Revisar fin de nivel
     verificarFinNivel();
 }
 
@@ -439,7 +455,7 @@ void JuegoVisual::ejecutar() {
                 texto.setStyle(sf::Text::Bold);
                 texto.setFillColor(sf::Color::White);
                 texto.setPosition(sf::Vector2f(300.f, 250.f));
-                window.draw(texto);
+            		    window.draw(texto);
             } else {
                 mostrandoNivel = false;
             }
