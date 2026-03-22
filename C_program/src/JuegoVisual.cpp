@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-// Constructor
 JuegoVisual::JuegoVisual() :
     window(sf::VideoMode(sf::Vector2u(900, 600)), "The Mind"),
     font(),
@@ -20,7 +19,9 @@ JuegoVisual::JuegoVisual() :
     ultimaCarta(0),
     inputTexto(""),
     cartasVisibles(),
-    rectangulosCartas()
+    rectangulosCartas(),
+    mostrarMensaje(false),
+    mensajeEstado("")
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
@@ -57,6 +58,8 @@ void JuegoVisual::iniciarNivel() {
     ultimaCarta = 0;
     jugadorActual = 0;
     enOverlay = true;
+ 
+    cartasJugadas.clear();
 }
 
 // Min global
@@ -100,6 +103,10 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     // ❌ Carta incorrecta
     if (carta != minGlobal) {
         vidas--;
+	mensajeEstado = "Carta incorrecta";
+        colorMensaje = sf::Color::Red;
+        mostrarMensaje = true;
+        relojMensaje.restart();
         std::cout << "❌ Carta incorrecta. Vidas restantes: "
                   << vidas << "\n";
 
@@ -121,6 +128,13 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     // ✅ Carta correcta
     jugadores[jugador].jugarCarta();
+
+    cartasJugadas.push_back(carta);
+
+    mensajeEstado = "Carta correcta";
+    colorMensaje = sf::Color::Green;
+    mostrarMensaje = true;
+    relojMensaje.restart();
     std::cout << "✅ Carta correcta: " << carta << "\n";
 
     ultimaCarta = carta;
@@ -224,6 +238,44 @@ void JuegoVisual::dibujarJuego() {
 
     dibujarTexto("Ultima carta: " + std::to_string(ultimaCarta), 50, 140);
     dibujarTexto("Presiona V para ver cartas", 50, 180);
+
+    // ===== Cartas jugadas =====
+    dibujarTexto("Cartas jugadas:", 50, 240);
+
+    float x = 50.f;
+    float y = 280.f;
+
+    for (int carta : cartasJugadas) {
+        sf::RectangleShape r(sf::Vector2f(50, 70));
+        r.setFillColor(sf::Color::White);
+        r.setPosition(sf::Vector2f(x, y));
+        window.draw(r);
+
+        sf::Text t(font, std::to_string(carta), 18);
+        t.setFillColor(sf::Color::Black);
+        t.setPosition(sf::Vector2f(x + 12.f, y + 20.f));
+        window.draw(t);
+
+        x += 60.f;
+
+        // salto de línea automático
+        if (x > 800.f) {
+            x = 50.f;
+            y += 80.f;
+        }
+    }
+    // Mostrar mensaje temporal
+    if (mostrarMensaje) {
+        if (relojMensaje.getElapsedTime().asSeconds() < 2.f) {
+            sf::Text texto(font, mensajeEstado, 28);
+            texto.setStyle(sf::Text::Bold);
+            texto.setFillColor(colorMensaje);
+            texto.setPosition(sf::Vector2f(350.f, 20.f));
+            window.draw(texto);
+        } else {
+            mostrarMensaje = false;
+        }
+    }
 }
 
 // Eventos
