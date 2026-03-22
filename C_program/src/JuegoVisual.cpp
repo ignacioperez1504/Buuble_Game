@@ -21,7 +21,8 @@ JuegoVisual::JuegoVisual() :
     cartasVisibles(),
     rectangulosCartas(),
     mostrarMensaje(false),
-    mensajeEstado("")
+    mensajeEstado(""),
+    mostrandoNivel(false)   // <- última variable NO lleva coma
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
@@ -60,6 +61,9 @@ void JuegoVisual::iniciarNivel() {
     enOverlay = true;
  
     cartasJugadas.clear();
+
+    mostrandoNivel = true;
+    relojNivel.restart();
 }
 
 // Min global
@@ -372,19 +376,64 @@ void JuegoVisual::manejarEventos() {
     }
 }
 
-// Loop
+
+
+// Loop principal
 void JuegoVisual::ejecutar() {
     while (window.isOpen()) {
 
+        // Manejar todos los eventos de teclado, mouse, etc.
         manejarEventos();
 
+        // Limpiar la ventana antes de dibujar
         window.clear(sf::Color(30, 30, 30));
 
-        if (enMenu) menu.dibujar(window);
-        else if (enOverlay) dibujarOverlay();
-        else if (viendoCartas) dibujarTexto("Selecciona jugador...", 300, 300);
-        else dibujarJuego();
+        // ------------------------------
+        // 1. Dibujar menú
+        // ------------------------------
+        if (enMenu) {
+            menu.dibujar(window);
+        }
 
+        // ------------------------------
+        // 2. Mostrar letrero de nivel
+        // ------------------------------
+        else if (mostrandoNivel) {
+            if (relojNivel.getElapsedTime().asSeconds() < 2.f) {
+                sf::Text texto(font,
+                               "NIVEL " + std::to_string(nivel),
+                               60);
+                texto.setStyle(sf::Text::Bold);
+                texto.setFillColor(sf::Color::White);
+                texto.setPosition(sf::Vector2f(300.f, 250.f));
+                window.draw(texto);
+            } else {
+                mostrandoNivel = false;
+            }
+        }
+
+        // ------------------------------
+        // 3. Dibujar overlay de cartas
+        // ------------------------------
+        else if (enOverlay) {
+            dibujarOverlay();
+        }
+
+        // ------------------------------
+        // 4. Mensaje para seleccionar jugador
+        // ------------------------------
+        else if (viendoCartas) {
+            dibujarTexto("Selecciona jugador...", 300, 300);
+        }
+
+        // ------------------------------
+        // 5. Dibujar el juego normal
+        // ------------------------------
+        else {
+            dibujarJuego();
+        }
+
+        // Mostrar todo en la ventana
         window.display();
     }
 }

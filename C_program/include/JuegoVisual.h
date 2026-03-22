@@ -41,6 +41,10 @@ private:
     // Historial de cartas jugadas
     std::vector<int> cartasJugadas;
 
+    // Pantalla inicio de nivel
+    bool mostrandoNivel;
+    sf::Clock relojNivel;
+
 public:
     JuegoVisual();
     void ejecutar();
