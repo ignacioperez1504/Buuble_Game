@@ -490,14 +490,6 @@ void JuegoVisual::ejecutar() {
 void JuegoVisual::usarComodin() {
     if (comodines <= 0) return;
 
-    for (auto& j : jugadores) {
-        if (j.tieneCartas()) {
-            j.eliminarCartaMasBaja();
-        }
-    }
-    
-    comodines--;
-
     std::string mensaje = "Comodin usado. Se eliminaron: ";
 
     for (auto& j : jugadores) {
@@ -508,6 +500,8 @@ void JuegoVisual::usarComodin() {
             }
         }
     }
+
+    comodines--;
 
     mensajeEstado = mensaje;
 
