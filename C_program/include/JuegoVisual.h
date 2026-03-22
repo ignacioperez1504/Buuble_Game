@@ -26,6 +26,7 @@ private:
     int jugadorActual;
     int jugadorSeleccionado;
     int ultimaCarta;
+    int comodines;
 
     // 🔥 NUEVO
     std::string inputTexto;
@@ -61,4 +62,6 @@ private:
     void dibujarTexto(std::string str, int x, int y, int size = 20);
     void dibujarOverlay();
     void dibujarJuego();
+    void usarComodin();
+    void verificarFinNivel();
 };
