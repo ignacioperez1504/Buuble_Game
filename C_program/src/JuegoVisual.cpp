@@ -2,10 +2,13 @@
 #include <algorithm>
 #include <random>
 #include <iostream>
+#include <sstream>
 
-// 🔹 Constructor
+// Constructor
 JuegoVisual::JuegoVisual() :
     window(sf::VideoMode(sf::Vector2u(900, 600)), "The Mind"),
+    font(),
+    menu(font),
     vidas(3),
     nivel(1),
     numJugadores(0),
@@ -14,14 +17,15 @@ JuegoVisual::JuegoVisual() :
     viendoCartas(false),
     jugadorActual(0),
     jugadorSeleccionado(-1),
-    ultimaCarta(0)
+    ultimaCarta(0),
+    inputTexto("") // 🔥 inicialización correcta
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
     }
 }
 
-// 🔹 Iniciar nivel
+// Iniciar nivel
 void JuegoVisual::iniciarNivel() {
     std::vector<Carta> mazo;
 
@@ -53,7 +57,7 @@ void JuegoVisual::iniciarNivel() {
     enOverlay = true;
 }
 
-// 🔹 Obtener mínimo global
+// Min global
 int JuegoVisual::getMinGlobal() {
     int min = 101;
 
@@ -67,19 +71,36 @@ int JuegoVisual::getMinGlobal() {
     return (min == 101) ? -1 : min;
 }
 
-// 🔹 Jugar turno
-void JuegoVisual::jugarTurno(int jugador) {
+// Jugar desde input tipo "0 23"
+void JuegoVisual::jugarDesdeInput(std::string input) {
+    std::stringstream ss(input);
+    int jugador, carta;
+
+    ss >> jugador >> carta;
+
+    if (ss.fail()) {
+        std::cout << "Formato incorrecto\n";
+        return;
+    }
+
     if (jugador < 0 || jugador >= numJugadores) return;
 
     if (!jugadores[jugador].tieneCartas()) return;
 
-    int carta = jugadores[jugador].verCarta().getValor();
+    int cartaReal = jugadores[jugador].verCarta().getValor();
+
+    if (carta != cartaReal) {
+        std::cout << "Debes jugar la menor carta\n";
+        return;
+    }
+
     jugadores[jugador].jugarCarta();
 
     int minGlobal = getMinGlobal();
 
     if (minGlobal != -1 && carta > minGlobal) {
         vidas--;
+        std::cout << "Error! Pierden vida\n";
 
         for (auto& j : jugadores) {
             while (j.tieneCartas() &&
@@ -87,12 +108,14 @@ void JuegoVisual::jugarTurno(int jugador) {
                 j.jugarCarta();
             }
         }
+    } else {
+        std::cout << "Carta correcta: " << carta << "\n";
     }
 
     ultimaCarta = carta;
 }
 
-// 🔹 Dibujar texto
+// Dibujar texto
 void JuegoVisual::dibujarTexto(std::string str, int x, int y, int size) {
     sf::Text text(font, str, size);
     text.setPosition(sf::Vector2f(x, y));
@@ -100,17 +123,7 @@ void JuegoVisual::dibujarTexto(std::string str, int x, int y, int size) {
     window.draw(text);
 }
 
-// 🔹 Dibujar menú
-void JuegoVisual::dibujarMenu() {
-    dibujarTexto("THE MIND", 350, 100, 40);
-    dibujarTexto("Selecciona numero de jugadores", 250, 200, 25);
-
-    dibujarTexto("Presiona 2 para 2 jugadores", 280, 300);
-    dibujarTexto("Presiona 3 para 3 jugadores", 280, 340);
-    dibujarTexto("Presiona 4 para 4 jugadores", 280, 380);
-}
-
-// 🔹 Overlay (mostrar cartas)
+// Overlay
 void JuegoVisual::dibujarOverlay() {
     dibujarTexto(
         "Jugador " + std::to_string(jugadorActual) + " mira tus cartas",
@@ -139,21 +152,19 @@ void JuegoVisual::dibujarOverlay() {
     dibujarTexto("SPACE para continuar", 300, 450);
 }
 
-// 🔹 Dibujar juego
+// Juego
 void JuegoVisual::dibujarJuego() {
     dibujarTexto("Nivel: " + std::to_string(nivel), 50, 20);
     dibujarTexto("Vidas: " + std::to_string(vidas), 200, 20);
 
-    dibujarTexto("Presiona numero de jugador y ENTER", 50, 60);
-
-    if (jugadorSeleccionado != -1) {
-        dibujarTexto("Jugador elegido: " + std::to_string(jugadorSeleccionado), 50, 100);
-    }
+    dibujarTexto("Escribe: jugador carta (ej: 0 23)", 50, 60);
+    dibujarTexto(inputTexto, 50, 100);
 
     dibujarTexto("Ultima carta: " + std::to_string(ultimaCarta), 50, 140);
+    dibujarTexto("Presiona V para ver cartas", 50, 180);
 }
 
-// 🔹 Manejo de eventos
+// Eventos
 void JuegoVisual::manejarEventos() {
     while (auto event = window.pollEvent()) {
 
@@ -161,12 +172,24 @@ void JuegoVisual::manejarEventos() {
             window.close();
         }
 
+        // INPUT TEXTO
+        if (event->is<sf::Event::TextEntered>()) {
+            auto text = event->getIf<sf::Event::TextEntered>();
+
+            if (text->unicode == 8) {
+                if (!inputTexto.empty())
+                    inputTexto.pop_back();
+            }
+            else if (text->unicode < 128) {
+                inputTexto += static_cast<char>(text->unicode);
+            }
+        }
+
         if (event->is<sf::Event::KeyPressed>()) {
             auto key = event->getIf<sf::Event::KeyPressed>();
 
             if (!key) continue;
 
-            // MENU
             if (enMenu) {
                 if (key->code == sf::Keyboard::Key::Num2) numJugadores = 2;
                 if (key->code == sf::Keyboard::Key::Num3) numJugadores = 3;
@@ -178,7 +201,6 @@ void JuegoVisual::manejarEventos() {
                 }
             }
 
-            // OVERLAY
             else if (enOverlay) {
                 if (key->code == sf::Keyboard::Key::Space) {
                     jugadorActual++;
@@ -188,9 +210,7 @@ void JuegoVisual::manejarEventos() {
                 }
             }
 
-            // VER CARTAS
             else if (viendoCartas) {
-
                 if (key->code >= sf::Keyboard::Key::Num0 &&
                     key->code <= sf::Keyboard::Key::Num9) {
 
@@ -205,36 +225,21 @@ void JuegoVisual::manejarEventos() {
                 }
             }
 
-            // JUEGO
             else {
-
                 if (key->code == sf::Keyboard::Key::V) {
                     viendoCartas = true;
                 }
 
-                if (key->code >= sf::Keyboard::Key::Num0 &&
-                    key->code <= sf::Keyboard::Key::Num9) {
-
-                    int elegido = static_cast<int>(key->code)
-                                 - static_cast<int>(sf::Keyboard::Key::Num0);
-
-                    if (elegido >= 0 && elegido < numJugadores) {
-                        jugadorSeleccionado = elegido;
-                    }
-                }
-
-                if (key->code == sf::Keyboard::Key::Enter &&
-                    jugadorSeleccionado != -1) {
-
-                    jugarTurno(jugadorSeleccionado);
-                    jugadorSeleccionado = -1;
+                if (key->code == sf::Keyboard::Key::Enter) {
+                    jugarDesdeInput(inputTexto);
+                    inputTexto = "";
                 }
             }
         }
     }
 }
 
-// 🔹 Loop principal
+// Loop
 void JuegoVisual::ejecutar() {
     while (window.isOpen()) {
 
@@ -242,7 +247,7 @@ void JuegoVisual::ejecutar() {
 
         window.clear(sf::Color(30, 30, 30));
 
-        if (enMenu) dibujarMenu();
+        if (enMenu) menu.dibujar(window);
         else if (enOverlay) dibujarOverlay();
         else if (viendoCartas) dibujarTexto("Selecciona jugador...", 300, 300);
         else dibujarJuego();
