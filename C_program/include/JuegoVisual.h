@@ -29,6 +29,10 @@ private:
 
     // 🔥 NUEVO
     std::string inputTexto;
+    
+    // Cartas mostradas/ocultas en overlay
+    std::vector<bool> cartasVisibles;
+    std::vector<sf::RectangleShape> rectangulosCartas;
 
 public:
     JuegoVisual();

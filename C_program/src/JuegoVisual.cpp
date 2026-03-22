@@ -18,7 +18,9 @@ JuegoVisual::JuegoVisual() :
     jugadorActual(0),
     jugadorSeleccionado(-1),
     ultimaCarta(0),
-    inputTexto("")
+    inputTexto(""),
+    cartasVisibles(),
+    rectangulosCartas()
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
@@ -141,26 +143,62 @@ void JuegoVisual::dibujarOverlay() {
     );
 
     float x = 100;
+    int indice = 0;
 
     Jugador copia = jugadores[jugadorActual];
+    
+    // Inicializar cartas visibles si es primera vez
+    if (cartasVisibles.empty()) {
+        while (copia.tieneCartas()) {
+            cartasVisibles.push_back(false);  // por defecto mostrar
+            copia.jugarCarta();
+        }
+    }
+    
+    // Reinicializar vector de rectángulos
+    rectangulosCartas.clear();
+    
+    // Redibujar la copia para iterar
+    copia = jugadores[jugadorActual];
+    indice = 0;
+    
     while (copia.tieneCartas()) {
         int v = copia.jugarCarta().getValor();
 
         sf::RectangleShape r(sf::Vector2f(60, 80));
         r.setPosition(sf::Vector2f(x, 200));
-        r.setFillColor(sf::Color::White);
-        window.draw(r);
-
-        sf::Text t(font, std::to_string(v), 20);
-        t.setFillColor(sf::Color::Black);
-        t.setPosition(sf::Vector2f(x + 15, 220));
-        window.draw(t);
+        
+        // Guardar rectángulo para detectar clics
+        rectangulosCartas.push_back(r);
+        
+        // Mostrar u ocultar carta
+        if (cartasVisibles[indice]) {
+            // Carta visible
+            r.setFillColor(sf::Color::White);
+            window.draw(r);
+            
+            sf::Text t(font, std::to_string(v), 20);
+            t.setFillColor(sf::Color::Black);
+            t.setPosition(sf::Vector2f(x + 15, 220));
+            window.draw(t);
+        } else {
+            // Carta oculta (color oscuro/gris)
+            r.setFillColor(sf::Color(100, 100, 100));
+            window.draw(r);
+            
+            sf::Text t(font, "?", 30);
+            t.setFillColor(sf::Color::White);
+            t.setPosition(sf::Vector2f(x + 20, 215));
+            window.draw(t);
+        }
 
         x += 80;
+        indice++;
     }
 
-    dibujarTexto("SPACE para continuar", 300, 450);
+    dibujarTexto("SPACE para continuar | CLIC para mostrar/ocultar", 200, 450);
 }
+
 
 // Juego
 void JuegoVisual::dibujarJuego() {
@@ -180,6 +218,25 @@ void JuegoVisual::manejarEventos() {
 
         if (event->is<sf::Event::Closed>()) {
             window.close();
+        }
+
+        // CLIC DEL MOUSE
+        if (event->is<sf::Event::MouseButtonPressed>()) {
+            auto mouse = event->getIf<sf::Event::MouseButtonPressed>();
+            if (mouse && mouse->button == sf::Mouse::Button::Left && enOverlay) {
+                sf::Vector2f posicion(mouse->position);
+                
+                // Verificar qué carta fue clickeada
+                for (int i = 0; i < rectangulosCartas.size(); i++) {
+                    if (rectangulosCartas[i].getGlobalBounds().contains(posicion)) {
+                        // Toggle mostrar/ocultar carta
+                        if (i < cartasVisibles.size()) {
+                            cartasVisibles[i] = !cartasVisibles[i];
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         // INPUT TEXTO
@@ -213,6 +270,7 @@ void JuegoVisual::manejarEventos() {
             else if (enOverlay) {
                 if (key->code == sf::Keyboard::Key::Space) {
                     jugadorActual++;
+                    cartasVisibles.clear();  // Reset cartas para siguiente jugador
                     if (jugadorActual >= numJugadores) {
                         enOverlay = false;
                     }
