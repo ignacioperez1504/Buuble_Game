@@ -73,24 +73,37 @@ int JuegoVisual::getMinGlobal() {
     return (min == 101) ? -1 : min;
 }
 
-// Jugar desde input tipo "0 23"
+// Jugar desde input tipo "23"
 void JuegoVisual::jugarDesdeInput(std::string input) {
     std::stringstream ss(input);
-    int jugador, carta;
+    int carta;
 
-    ss >> jugador >> carta;
+    ss >> carta;
     if (ss.fail()) return;
 
-    if (jugador < 0 || jugador >= numJugadores) return;
-    if (!jugadores[jugador].tieneCartas()) return;
+    // Buscar jugador que tiene esa carta arriba
+    int jugador = -1;
 
-    int cartaReal = jugadores[jugador].verCarta().getValor();
+    for (int i = 0; i < numJugadores; i++) {
+        if (jugadores[i].tieneCartas() &&
+            jugadores[i].verCarta().getValor() == carta) {
+            jugador = i;
+            break;
+        }
+    }
 
-    if (carta != cartaReal) {
+    // Nadie tiene esa carta
+    if (jugador == -1) return;
+
+    int minGlobal = getMinGlobal();
+
+    // ❌ Carta incorrecta
+    if (carta != minGlobal) {
         vidas--;
-        std::cout << "❌ Debes jugar la menor carta. Vidas restantes: " << vidas << "\n";
+        std::cout << "❌ Carta incorrecta. Vidas restantes: "
+                  << vidas << "\n";
 
-        // eliminar cartas menores incorrectas
+        // eliminar cartas menores
         for (auto& j : jugadores) {
             while (j.tieneCartas() &&
                    j.verCarta().getValor() < carta) {
@@ -106,12 +119,13 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         return;
     }
 
+    // ✅ Carta correcta
     jugadores[jugador].jugarCarta();
     std::cout << "✅ Carta correcta: " << carta << "\n";
 
     ultimaCarta = carta;
 
-    // Revisar si terminamos el nivel
+    // Revisar fin de nivel
     bool nivelTerminado = true;
     for (auto& j : jugadores) {
         if (j.tieneCartas()) {
@@ -123,7 +137,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     if (nivelTerminado) {
         nivel++;
         std::cout << "🎉 Nivel " << nivel << "\n";
-        iniciarNivel(); // reparte cartas +1 a cada jugador automáticamente
+        iniciarNivel();
     }
 }
 
@@ -205,7 +219,7 @@ void JuegoVisual::dibujarJuego() {
     dibujarTexto("Nivel: " + std::to_string(nivel), 50, 20);
     dibujarTexto("Vidas: " + std::to_string(vidas), 200, 20);
 
-    dibujarTexto("Escribe: jugador carta (ej: 0 23)", 50, 60);
+    dibujarTexto("Escribe una carta (ej: 23)", 50, 60);
     dibujarTexto(inputTexto, 50, 100);
 
     dibujarTexto("Ultima carta: " + std::to_string(ultimaCarta), 50, 140);
