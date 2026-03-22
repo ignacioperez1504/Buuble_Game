@@ -18,7 +18,7 @@ JuegoVisual::JuegoVisual() :
     jugadorActual(0),
     jugadorSeleccionado(-1),
     ultimaCarta(0),
-    inputTexto("") // 🔥 inicialización correcta
+    inputTexto("")
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
@@ -77,42 +77,52 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     int jugador, carta;
 
     ss >> jugador >> carta;
-
-    if (ss.fail()) {
-        std::cout << "Formato incorrecto\n";
-        return;
-    }
+    if (ss.fail()) return;
 
     if (jugador < 0 || jugador >= numJugadores) return;
-
     if (!jugadores[jugador].tieneCartas()) return;
 
     int cartaReal = jugadores[jugador].verCarta().getValor();
 
     if (carta != cartaReal) {
-        std::cout << "Debes jugar la menor carta\n";
-        return;
-    }
-
-    jugadores[jugador].jugarCarta();
-
-    int minGlobal = getMinGlobal();
-
-    if (minGlobal != -1 && carta > minGlobal) {
         vidas--;
-        std::cout << "Error! Pierden vida\n";
+        std::cout << "❌ Debes jugar la menor carta. Vidas restantes: " << vidas << "\n";
 
+        // eliminar cartas menores incorrectas
         for (auto& j : jugadores) {
             while (j.tieneCartas() &&
                    j.verCarta().getValor() < carta) {
                 j.jugarCarta();
             }
         }
-    } else {
-        std::cout << "Carta correcta: " << carta << "\n";
+
+        if (vidas <= 0) {
+            std::cout << "💀 GAME OVER\n";
+            window.close();
+        }
+
+        return;
     }
 
+    jugadores[jugador].jugarCarta();
+    std::cout << "✅ Carta correcta: " << carta << "\n";
+
     ultimaCarta = carta;
+
+    // Revisar si terminamos el nivel
+    bool nivelTerminado = true;
+    for (auto& j : jugadores) {
+        if (j.tieneCartas()) {
+            nivelTerminado = false;
+            break;
+        }
+    }
+
+    if (nivelTerminado) {
+        nivel++;
+        std::cout << "🎉 Nivel " << nivel << "\n";
+        iniciarNivel(); // reparte cartas +1 a cada jugador automáticamente
+    }
 }
 
 // Dibujar texto
@@ -176,7 +186,7 @@ void JuegoVisual::manejarEventos() {
         if (event->is<sf::Event::TextEntered>()) {
             auto text = event->getIf<sf::Event::TextEntered>();
 
-            if (text->unicode == 8) {
+            if (text->unicode == 8) { // backspace
                 if (!inputTexto.empty())
                     inputTexto.pop_back();
             }
@@ -187,7 +197,6 @@ void JuegoVisual::manejarEventos() {
 
         if (event->is<sf::Event::KeyPressed>()) {
             auto key = event->getIf<sf::Event::KeyPressed>();
-
             if (!key) continue;
 
             if (enMenu) {
