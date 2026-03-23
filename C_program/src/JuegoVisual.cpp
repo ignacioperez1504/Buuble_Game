@@ -140,12 +140,20 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     // Buscar jugador que tiene esa carta arriba
     int jugador = -1;
+
     for (int i = 0; i < numJugadores; i++) {
-        if (jugadores[i].tieneCartas() &&
-            jugadores[i].verCarta().getValor() == carta) {
-            jugador = i;
-            break;
+        Jugador copia = jugadores[i];
+
+        while (copia.tieneCartas()) {
+            int val = copia.jugarCarta().getValor();
+
+            if (val == carta) {
+                jugador = i;
+                break;
+            }
         }
+
+        if (jugador != -1) break;
     }
 
     // Número no válido en la ronda
@@ -162,22 +170,57 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
 
     //Carta incorrecta
     if (carta != minGlobal) {
-        vidas--;
-        mensajeEstado = "Carta incorrecta";
-        colorMensaje = sf::Color::Red;
-        mostrarMensaje = true;
-        relojMensaje.restart();
-        std::cout << "Carta incorrecta. Vidas restantes: "
-                  << vidas << "\n";
 
-        // eliminar cartas menores
+        int vidasPerdidas = 0;
+        std::string eliminadas = "";
+
+        // 1. Eliminar TODAS las cartas menores
         for (auto& j : jugadores) {
             while (j.tieneCartas() &&
                    j.verCarta().getValor() < carta) {
-                j.jugarCarta();
+
+                int val = j.jugarCarta().getValor();
+                cartasJugadas.push_back(val);
+
+                vidasPerdidas++;
+                eliminadas += std::to_string(val) + " ";
             }
         }
 
+        // 2. Eliminar la carta jugada (aunque no esté arriba)
+        Jugador nuevaMano;
+
+        while (jugadores[jugador].tieneCartas()) {
+            int val = jugadores[jugador].jugarCarta().getValor();
+
+            if (val != carta) {
+                nuevaMano.recibirCarta(Carta(val));
+            }
+        }
+
+        nuevaMano.ordenarMano();
+        jugadores[jugador] = nuevaMano;
+
+        // Registrar carta jugada
+        cartasJugadas.push_back(carta);
+
+        // 3. Restar vidas correctamente
+        vidas -= vidasPerdidas;
+
+        // 4. Mensaje correcto
+        mensajeEstado = "Incorrecto (-" + std::to_string(vidasPerdidas) + " vidas)";
+        if (!eliminadas.empty()) {
+            mensajeEstado += " | Eliminadas: " + eliminadas;
+        }
+
+        colorMensaje = sf::Color::Red;
+        mostrarMensaje = true;
+        relojMensaje.restart();
+   
+        std::cout << "Incorrecto. Perdiste " << vidasPerdidas
+                  << " vidas. Restantes: " << vidas << "\n";
+
+        // 5. Game over
         if (vidas <= 0) {
             std::cout << "GAME OVER\n";
             window.close();
@@ -187,8 +230,21 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     }
 
     //Carta correcta
-    jugadores[jugador].jugarCarta();
-    cartasJugadas.push_back(carta);
+    // Eliminar la carta específica (aunque no esté arriba)
+    Jugador nuevaMano;
+
+    while (jugadores[jugador].tieneCartas()) {
+        int val = jugadores[jugador].jugarCarta().getValor();
+
+        if (val != carta) {
+            nuevaMano.recibirCarta(Carta(val));
+        }
+    }
+
+    // Reordenar la mano sin la carta jugada
+    nuevaMano.ordenarMano();
+    jugadores[jugador] = nuevaMano;
+        cartasJugadas.push_back(carta);
 
     mensajeEstado = "Carta correcta";
     colorMensaje = sf::Color::Green;
