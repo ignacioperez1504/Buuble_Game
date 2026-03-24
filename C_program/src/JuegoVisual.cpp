@@ -23,24 +23,29 @@ JuegoVisual::JuegoVisual() :
     rectangulosCartas(),
     mostrarMensaje(false),
     mensajeEstado(""),
-    mostrandoNivel(false)   // <- última variable NO lleva coma
+    mostrandoNivel(false)   
 {
     if (!font.openFromFile("arial.ttf")) {
         std::cout << "Error cargando fuente\n";
     }
 }
 
-// Iniciar nivel
-void JuegoVisual::iniciarNivel() {
+// Iniciar nivel 
+
+
+void JuegoVisual::iniciarNivel() {          //(Constructor)
     std::vector<Carta> mazo;
 
-    for (int i = 1; i <= 100; i++) {
+
+	//Se aumenta en uno las cartas por jugador segun avanza en los niveles
+    for (int i = 1; i <= 100; i++) {    //push_back agrega un numero en la ultima entrada de un vector
         mazo.push_back(Carta(i));
     }
 
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(mazo.begin(), mazo.end(), g);
+    std::random_device rd;   //genera numeros aleatorios
+    std::mt19937 g(rd());   //Un generador de numeros pseudoaleatorios llamado:Mersenne Twister
+    std::shuffle(mazo.begin(), mazo.end(), g);  //Mezcla
+
 
     int index = 0;
 
@@ -68,7 +73,13 @@ void JuegoVisual::iniciarNivel() {
     relojNivel.restart();
 }
 
+
+
+
 // Min global
+
+//Esta función calcula la carta más pequeña disponible entre todos los jugadores, lo cual define la jugada correcta según las reglas del juego.
+
 int JuegoVisual::getMinGlobal() {
     int min = 101;
 
@@ -121,7 +132,11 @@ void JuegoVisual::verificarFinNivel() {
     }
 }
 
+
+
 // Jugar desde input tipo "23"
+
+
 void JuegoVisual::jugarDesdeInput(std::string input) {
     std::stringstream ss(input);
     int carta;
@@ -174,7 +189,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         int vidasPerdidas = 0;
         std::string eliminadas = "";
 
-        // 1. Eliminar TODAS las cartas menores
+        // Eliminar TODAS las cartas menores
         for (auto& j : jugadores) {
             while (j.tieneCartas() &&
                    j.verCarta().getValor() < carta) {
@@ -187,7 +202,7 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
             }
         }
 
-        // 2. Eliminar la carta jugada (aunque no esté arriba)
+        // Eliminar la carta jugada (aunque no esté arriba)
         Jugador nuevaMano;
 
         while (jugadores[jugador].tieneCartas()) {
@@ -204,10 +219,10 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         // Registrar carta jugada
         cartasJugadas.push_back(carta);
 
-        // 3. Restar vidas correctamente
+        // Restar vidas correctamente
         vidas -= vidasPerdidas;
 
-        // 4. Mensaje correcto
+        // Mensaje correcto
         mensajeEstado = "Incorrecto (-" + std::to_string(vidasPerdidas) + " vidas)";
         if (!eliminadas.empty()) {
             mensajeEstado += " | Eliminadas: " + eliminadas;
@@ -220,11 +235,15 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
         std::cout << "Incorrecto. Perdiste " << vidasPerdidas
                   << " vidas. Restantes: " << vidas << "\n";
 
-        // 5. Game over
+        // Game over
         if (vidas <= 0) {
             std::cout << "GAME OVER\n";
             window.close();
-        }
+        return;
+}
+
+        // Verificar si el nivel terminó incluso con error
+        verificarFinNivel();
 
         return;
     }
@@ -257,6 +276,8 @@ void JuegoVisual::jugarDesdeInput(std::string input) {
     // Revisar fin de nivel
     verificarFinNivel();
 }
+
+
 
 // Dibujar texto
 void JuegoVisual::dibujarTexto(std::string str, int x, int y, int size) {
@@ -342,7 +363,7 @@ void JuegoVisual::dibujarJuego() {
     dibujarTexto("Ultima carta: " + std::to_string(ultimaCarta), 50, 140);
     dibujarTexto("Presiona V para ver cartas", 50, 180);
 
-    // ===== Cartas jugadas =====
+    //Cartas jugadas 
     dibujarTexto("Cartas jugadas:", 50, 240);
 
     dibujarTexto("Comodines: " + std::to_string(comodines), 350, 20);
@@ -391,7 +412,7 @@ void JuegoVisual::manejarEventos() {
             window.close();
         }
 
-        // CLIC DEL MOUSE
+        // Al dar click muestra-esconde la carta
         if (event->is<sf::Event::MouseButtonPressed>()) {
             auto mouse = event->getIf<sf::Event::MouseButtonPressed>();
             if (mouse && mouse->button == sf::Mouse::Button::Left && enOverlay) {
@@ -410,7 +431,7 @@ void JuegoVisual::manejarEventos() {
             }
         }
 
-        // INPUT TEXTO
+        // Ingreso de texto
         if (event->is<sf::Event::TextEntered>()) {
             auto text = event->getIf<sf::Event::TextEntered>();
 
@@ -493,17 +514,12 @@ void JuegoVisual::ejecutar() {
         // Limpiar la ventana antes de dibujar
         window.clear(sf::Color(30, 30, 30));
 
-        // ------------------------------
-        // 1. Dibujar menú
-        // ------------------------------
+        // Dibujar menú
         if (enMenu) {
             menu.dibujar(window);
         }
 
-        // ------------------------------
-        // 2. Mostrar letrero de nivel
-        // ------------------------------
-        else if (mostrandoNivel) {
+        else if (mostrandoNivel) {  //Mostrar letrero de nivel
             if (relojNivel.getElapsedTime().asSeconds() < 2.f) {
                 sf::Text texto(font,
                                "NIVEL " + std::to_string(nivel),
@@ -516,28 +532,19 @@ void JuegoVisual::ejecutar() {
                 mostrandoNivel = false;
             }
         }
-
-        // ------------------------------
-        // 3. Dibujar overlay de cartas
-        // ------------------------------
+        // Dibujar overlay de cartas
         else if (enOverlay) {
             dibujarOverlay();
         }
-
-        // ------------------------------
-        // 4. Mensaje para seleccionar jugador
-        // ------------------------------
+        // Mensaje para seleccionar jugador
         else if (viendoCartas) {
             dibujarTexto("Selecciona jugador...", 300, 300);
         }
 
-        // ------------------------------
-        // 5. Dibujar el juego normal
-        // ------------------------------
+        // Dibujar el juego normal
         else {
             dibujarJuego();
         }
-
         // Mostrar todo en la ventana
         window.display();
     }
