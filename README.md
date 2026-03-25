@@ -3,7 +3,7 @@
 Este proyecto es una implementación del juego *The Mind* utilizando C++ y la librería gráfica SFML. Permite jugar de manera local simulando la dinámica cooperativa del juego original, donde los jugadores deben coordinarse sin comunicación explícita.
 ---
 
-## 📌 Descripción general
+## Descripción general
 
 El juego consiste en que varios jugadores deben jugar cartas en orden ascendente sin decir sus valores. Cada jugador recibe un conjunto de cartas y, mediante intuición y sincronización, deben colocarlas correctamente.
 
@@ -20,7 +20,7 @@ Esta versión implementa:
 
 ---
 
-## 🧱 Estructura del proyecto
+## Estructura del proyecto
 
 El proyecto está organizado en varias clases principales:
 
