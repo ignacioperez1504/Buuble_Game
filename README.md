@@ -1,14 +1,12 @@
 # THE MIND – Implementación en C++ con SFML
-
-Este proyecto es una implementación del juego *The Mind* utilizando C++ y la librería gráfica SFML. Permite jugar de manera local simulando la dinámica cooperativa del juego original, donde los jugadores deben coordinarse sin comunicación explícita.
 ---
+Este proyecto es una implementación del juego *The Mind* utilizando C++ y la librería gráfica SFML. Permite jugar de manera local simulando la dinámica cooperativa del juego original, donde los jugadores deben coordinarse sin comunicación explícita.
 
 ## Descripción general
 
 El juego consiste en que varios jugadores deben jugar cartas en orden ascendente sin decir sus valores. Cada jugador recibe un conjunto de cartas y, mediante intuición y sincronización, deben colocarlas correctamente.
 
-Esta versión implementa:
-
+Esta versión implementa mejoras significativas:
 * Sistema de niveles
 * Vidas y comodines
 * Interfaz gráfica con SFML
@@ -24,7 +22,6 @@ Esta versión implementa:
 
 El proyecto está organizado en varias clases principales:
 
----
 
 ### `Carta`
 
@@ -157,8 +154,7 @@ g++ src/*.cpp -Iinclude -o build/juego -lsfml-graphics -lsfml-window -lsfml-syst
 ---
 
 ## Reglas completas del juego
-
-Aquí puedes añadir un enlace externo para entender mejor la dinámica original:
+[Video Youtube Reglas The Mind](https://www.youtube.com/watch?v=dFGmKid9O9k)
 
 
 ---
